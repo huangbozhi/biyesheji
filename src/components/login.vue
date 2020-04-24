@@ -5,17 +5,22 @@
         <div class="manage_tip">
           <p>学历证明系统</p>
         </div>
-        <el-form :model="loginForm" :rules="rules" ref="loginForm">
+        <el-form ref="loginForm">
           <el-form-item class="item" prop="username">
-            <el-input v-model="loginForm.username" placeholder="用户名">
+            <el-input v-model="username" placeholder="用户名">
               <span>dsfsf</span>
             </el-input>
           </el-form-item>
           <el-form-item class="item" prop="password">
-            <el-input type="password" placeholder="密码" v-model="loginForm.password"></el-input>
+            <el-input type="password" placeholder="密码" v-model="password"></el-input>
           </el-form-item>
           <el-form-item class="item">
-            <el-button type="primary" @click="submitForm('loginForm')" class="submit_btn">登陆</el-button>
+            <el-button
+              type="primary"
+              @click="submitForm()"
+              class="submit_btn"
+              :loading="openLoading"
+            >登陆</el-button>
           </el-form-item>
         </el-form>
         <p class="tip">温馨提示：</p>
@@ -27,16 +32,67 @@
 </template>
 
 <script>
+import axios from "axios";
+import url from "@/serviceAPI.config.js";
+// import
+
 export default {
   name: "Login",
 
   data() {
     return {
-      loginForm: {
-        username: "",
-        password: ""
-      }
+      username: "",
+      password: "",
+      openLoading: false // 登录loading状态
     };
+  },
+  methods: {
+    submitForm() {
+      this.checkForm() && this.axiosLogin();
+    },
+    checkForm() {
+      if (this.username == "") {
+        this.$message("用户名不能为空");
+        return false;
+      } else if (this.password == "") {
+        this.$message("密码不能为空");
+        return false;
+      }
+      return true;
+    },
+    axiosLogin() {
+      this.openLoading = true;
+
+      axios({
+        url: url.login,
+        method: "post",
+        data: {
+          username: this.username,
+          password: this.password
+        }
+      })
+        .then(response => {
+          console.log(response.data);
+          if (response.data.code == 200) {
+            this.$message({
+              message: response.data.message,
+              type: "success"
+            });
+            this.$router.push("/");
+            this.openLoading = false;
+            localStorage.setItem("user_name", this.username);
+          } else {
+            this.openLoading = false;
+            this.$message({
+              message: "登录失败",
+              type: "fail"
+            });
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    }
   }
 };
 </script>
@@ -80,17 +136,5 @@ export default {
 .form-fade-leave-active {
   transform: translate3d(0, -50px, 0);
   opacity: 0;
-}
-.item {
-  // width: 40px;
-  height: 22px;
-}
-.el-form-item {
-  // border: 1px;
-  border: 1px solid #999;
-  margin-bottom: 5px;
-}
-.el-button {
-  margin-bottom: 25px;
 }
 </style>
